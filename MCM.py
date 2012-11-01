@@ -3,7 +3,7 @@
 #Import all runner info from the csv prepared with Google Refine
 import csv
 runner=[]
-f = open('MCM.csv''', 'rt')
+f = open('MCM.csv', 'rt')
 try:
     reader = csv.DictReader(f)
     for row in reader:
