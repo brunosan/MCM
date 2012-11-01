@@ -20,6 +20,64 @@ Places_counts = Counter(Places)
 len(Places_counts)
 Places_counts.most_common(10)
 
+
+#Make a dictionary with Places, their location, and number of runners
+Places_dic={}
+for r in runner:
+    for P in Places_counts:
+	
+	if r['Location']==P:  #runner is from that place
+		if P in Places_dic:
+		  #not the first time, add info to this location
+		  Places_dic[P]['runners']+=1
+		  Places_dic[P]['Time'].append(int(r['ChipTimeSeconds']))
+		  Places_dic[P]['Ages'].append(int(r['Age']))
+		  Places_dic[P]['Gender'].append(r['Sex'])
+		  if Places_dic[P]['lat']=='':
+			Places_dic[P]['lat']=r['lat']
+			print 'gotcha'
+		  if Places_dic[P]['lng']=='':
+			Places_dic[P]['lng']=r['lat']
+			print 'gotcha'
+		else:
+		  #first time, add dictionary
+		  Places_dic[P]={}
+		  Places_dic[P]['runners']=1
+		  Places_dic[P]['Time']=[int(r['ChipTimeSeconds'])]
+		  Places_dic[P]['Ages']=[int(r['Age'])]
+		  Places_dic[P]['Gender']=[r['Sex']]
+		  Places_dic[P]['lat']=r['lat']
+		  Places_dic[P]['lng']=r['lng']
+		  print 'new place:',P
+
+#add pertentiles to Places
+from scipy import stats
+for P in Places_dic:
+	ages=np.asarray(Places_dic[P]['Ages'])
+	times=np.asarray(Places_dic[P]['Time'])
+	Places_dic[P]['Age_p']=[stats.scoreatpercentile(ages,10),stats.scoreatpercentile(ages,50),stats.scoreatpercentile(ages,90)]
+	Places_dic[P]['Times_p']=[stats.scoreatpercentile(times,10),stats.scoreatpercentile(times,50),stats.scoreatpercentile(times,90)]
+	Places_dic[P]['Gender']=[Places_dic['WASHINGTON,DC']['Gender'].count('M'),Places_dic['WASHINGTON,DC']['Gender'].count('F')]	
+	Places_dic[P]['fastest']=np.min(times)
+	Places_dic[P]['median']=np.median(times)
+
+
+#Save aggregated data to csv
+writer = csv.writer(open("MCM-a.csv", 'w'), delimiter=',',quoting=csv.QUOTE_ALL)
+header=['Location']
+for key in Places_dic["WASHINGTON,DC"]:
+	header.append(key)
+writer.writerow(header)
+
+for P in Places_dic:
+	row=[P]
+	for key in Places_dic[P]:
+		row.append(Places_dic[P][key])
+	writer.writerow(row)
+
+
+
+
 Ages=[r['Age'] for r in runner if 'Age' in r]
 Age_counts = Counter(Ages)
 len(Age_counts)
