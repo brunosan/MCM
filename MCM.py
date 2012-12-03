@@ -170,3 +170,27 @@ plt.legend()
 plt.show()
 
 
+
+#Function to get seconds from time like 1:30:30
+def count_sec(lista):
+	return np.sum(np.array([np.int(a) for a in lista.split(':')])*[60*60,60,1])
+#Order by ClockTime-ChipTime (similar to order before start)	
+for r in runner:
+	r['Start_order']=count_sec(r['ChipTime'])-count_sec(r['ClockTime'])
+	r['End_order']=count_sec(r['ChipTime'])
+
+Start=sorted(runner, key=lambda k: k['Start_order'])
+End=  sorted(runner, key=lambda k: k['End_order'])
+
+#Change in the order
+from operator import itemgetter
+change=[]
+for r in runner:
+	index_s=map(itemgetter('Bib'),Start).index(r['Bib'])
+	index_e=map(itemgetter('Bib'),End).index(r['Bib'])
+	r['Change']=index_s-index_e
+
+changes=np.array(map(float,[r['Change'] for r in runner if 'Change' in r]))
+Time_H=np.array(map(float,[r['ChipTimeSeconds'] for r in runner if 'ChipTimeSeconds' in r]))/60/60
+plt.scatter(changes,Time_H)
+plt.show()
