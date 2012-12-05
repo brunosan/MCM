@@ -1,4 +1,5 @@
-
+#This is my FIRST python code, so it's probably not very... pythonic
+#Comments welcomed!!
 
 #Import all runner info from the csv prepared with Google Refine
 import csv
@@ -11,16 +12,13 @@ try:
 finally:
     f.close()
 
-#Get a list of cities and Ages
+#Get a list of cities
 #Count uniques
 from collections import Counter
-
 Places=[r['Location'] for r in runner if 'Location' in r]
 Places_counts = Counter(Places)
 len(Places_counts)
 Places_counts.most_common(10)
-
-
 #Make a dictionary with Places, their location, and number of runners
 Places_dic={}
 for r in runner:
@@ -50,17 +48,59 @@ for r in runner:
 		  Places_dic[P]['lng']=r['lng']
 		  print 'new place:',P
 
+
+P='all'
+for r in runner:
+	P='all'
+	if P in Places_dic:
+		  #not the first time, add info to this location
+		  Places_dic[P]['runners']+=1
+		  Places_dic[P]['Time'].append(int(r['ChipTimeSeconds']))
+		  Places_dic[P]['Ages'].append(int(r['Age']))
+		  Places_dic[P]['Gender'].append(r['Sex'])
+		  if Places_dic[P]['lat']=='':
+			Places_dic[P]['lat']=r['lat']
+			print 'gotcha'
+		  if Places_dic[P]['lng']=='':
+			Places_dic[P]['lng']=r['lat']
+			print 'gotcha'
+	else:
+		  #first time, add dictionary
+		  Places_dic[P]={}
+		  Places_dic[P]['runners']=1
+		  Places_dic[P]['Time']=[int(r['ChipTimeSeconds'])]
+		  Places_dic[P]['Ages']=[int(r['Age'])]
+		  Places_dic[P]['Gender']=[r['Sex']]
+		  Places_dic[P]['lat']=r['lat']
+		  Places_dic[P]['lng']=r['lng']
+		  print 'new place:',P
+		
+		
+
+
 #add pertentiles to Places
 from scipy import stats
 for P in Places_dic:
 	ages=np.asarray(Places_dic[P]['Ages'])
 	times=np.asarray(Places_dic[P]['Time'])
-	Places_dic[P]['Age_p']=[stats.scoreatpercentile(ages,10),stats.scoreatpercentile(ages,50),stats.scoreatpercentile(ages,90)]
-	Places_dic[P]['Times_p']=[stats.scoreatpercentile(times,10),stats.scoreatpercentile(times,50),stats.scoreatpercentile(times,90)]
-	Places_dic[P]['Gender']=[Places_dic['WASHINGTON,DC']['Gender'].count('M'),Places_dic['WASHINGTON,DC']['Gender'].count('F')]	
-	Places_dic[P]['fastest']=np.min(times)
-	Places_dic[P]['median']=np.median(times)
+	Places_dic[P]['Age_10']=round(stats.scoreatpercentile(ages,10))
+	Places_dic[P]['Age_50']=round(stats.scoreatpercentile(ages,50))
+	Places_dic[P]['Age_90']=round(stats.scoreatpercentile(ages,90))
+	Places_dic[P]['Time_10']='%.2f' % (stats.scoreatpercentile(times,10)/60./60.)
+	Places_dic[P]['Time_50']='%.2f' % (stats.scoreatpercentile(times,50)/60./60.)
+	Places_dic[P]['Time_90']='%.2f' % (stats.scoreatpercentile(times,90)/60./60.)
+	Places_dic[P]['Men']=Places_dic[P]['Gender'].count('M')
+	Places_dic[P]['Female']=Places_dic[P]['Gender'].count('F')
+	#clean
+	Places_dic[P].pop('Ages')
+	Places_dic[P].pop('Time')
+	Places_dic[P].pop('Gender')	
 
+#Place for undefined
+Places_dic['']['lat']=36.197455708189224
+Places_dic['']['lng']=-72.4822998046875
+Places_dic['Undefined Location']=Places_dic['']
+Places_dic.pop('')
 
 #Save aggregated data to csv
 writer = csv.writer(open("MCM-a.csv", 'w'), delimiter=',',quoting=csv.QUOTE_ALL)
